@@ -1,0 +1,61 @@
+
+function start_SDK_2_0() {
+    PP=$PWD
+    cd /opt/gc/poplar_sdk-ubuntu_18_04-2.0.0+481-79b41f85d1
+    source poplar-ubuntu_18_04-2.0.0+108156-165bbd8a64/enable.sh 
+    source popart-ubuntu_18_04-2.0.0+108156-165bbd8a64/enable.sh 
+    cd $PP
+}
+
+function start_SDK_2_1() {
+    echo "on GraphCloud SDK 2.1.0"
+    PP=$PWD
+    cd /home/balewskij/gc-sdk/poplar_sdk-ubuntu_18_04-2.1.0+617-6bb5f5b742
+    source poplar-ubuntu_18_04-2.1.0+145366-ce995e299d/enable.sh 
+    source popart-ubuntu_18_04-2.1.0+145366-ce995e299d/enable.sh
+    cd $PP
+}
+
+function start_SDK_2_2() {
+    echo "on GraphCloud SDK 2.2.0"
+    PP=$PWD
+    cd /home/balewskij/gc-sdk/poplar_sdk-ubuntu_18_04-2.2.0+688-7a4ab80373
+    source poplar-ubuntu_18_04-2.2.0+166889-feb7f3f2bb/enable.sh 
+    source popart-ubuntu_18_04-2.2.0+166889-feb7f3f2bb/enable.sh 
+    cd $PP
+}
+
+
+if [[ `hostname` == lr66-poplar3 ]] ; then
+
+ start_SDK_2_2
+ source ~/.bashrc
+ pwd
+ source ~/workspace/poptorch_env_2.2/bin/activate
+ #source ~/workspace/poptorch_env_2.1.0c/bin/activate
+
+
+ python -V
+ python -c 'import torch, poptorch,horovod; print("pytorch:",torch.__version__,"\npoptorch:",poptorch.__version__,"\nhorovod:",horovod.__version__)'
+
+ echo try:   gc-inventory 
+
+fi
+
+
+if [[ `hostname` == cori* ]]  || [[ `hostname` == nid*  ]] || [[ `hostname` == cgpu*  ]] ; then
+ echo "on Cori "
+ module load tensorflow/gpu-2.1.0-py37
+ module load esslurm
+ eval  `ssh-agent   -s`
+ ssh-add ~/.ssh/pdsf-nim.pem
+ echo TRY:  salloc  -C gpu -n1 -c 10 --gres=gpu:1 --ntasks-per-node=1 -Adasrepo -t4:00:00 
+
+fi
+
+
+echo 'setup done'
+
+
+# source ~/gv_virtualenv/bin/activate
+# deactivate

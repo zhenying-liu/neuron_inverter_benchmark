@@ -29,10 +29,7 @@ class NeuInvModel(nn.Module):
         self.flat_bn=None
         if hpar['batch_norm_flat']:
             self.flat_bn=torch.nn.BatchNorm1d(self.flat_dim,track_running_stats=False)
-            #self.flat_bn=torch.nn.BatchNorm1d(self.flat_dim,affine=True)
-            # num_features  from an expected input of size (N, C, L), or  L from input of size (N, L)
-            # affine a boolean value that when set to True, this module has learnable affine parameters.
-    
+               
         # .... add FC  layers
         hpar2=hpar['fc_block']
         self.fc_block  = nn.ModuleList()

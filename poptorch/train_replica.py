@@ -18,7 +18,7 @@ Long training on 100 epochs on  10-cell data
 
 Multi-IPU training
 m=2
-poprun --num-instances=$m --num-replicas=$m   ./train_replica.py --design hpar_gc1  --outPath outX 
+poprun --num-instances=$m --num-replicas=$m   ./train_replica.py --design gc4  --outPath outX 
 
   
 '''
@@ -37,7 +37,7 @@ import popdist
 
 def get_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--design", default='hpar_gc1', type=str)
+    parser.add_argument("--design", default='gc4',help='[.hpar.yaml] configuration of model and training')
     parser.add_argument("-v","--verbosity",type=int,choices=[0, 1, 2,3],  help="increase output verbosity", default=1, dest='verb')
     parser.add_argument("-o","--outPath", default='out/', help=' all outputs, also TB')
     parser.add_argument("--cellName", type=str, default='bbp153', help="cell shortName ")
@@ -73,7 +73,7 @@ if __name__ == '__main__':
 
     args = get_parser()
     #for arg in vars(args):  print( 'myArg:',arg, getattr(args, arg))
-    params = read_yaml( args.design+'.yaml',verb=rank==0)
+    params = read_yaml( args.design+'.hpar.yaml',verb=rank==0)
     params['design']=args.design
     params['cell_name']=args.cellName        
     params['num_inp_chan']=args.numInpChan
