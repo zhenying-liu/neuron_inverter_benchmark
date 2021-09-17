@@ -1,0 +1,119 @@
+Instruction on how to run Neuron-Inverter on multiple IPUs 
+(The outstanding issues are listed at the bottom)
+
+Updated 2021-08-25  
+
+***) Training data ():
+Upload this 2 files from 
+https://portal.nersc.gov/cfs/m2043/tryML/
+meta.cellSpike_excite_4prB8kHz.yaml
+witness2c_excite.cellSpike_4prB8kHz.data.h5  (29 GB)
+
+and place them at the local directory on the M2000
+The witness2c...h5 contains ~1M training samples, 100 k validation, and 100k test samples
+
+
+***) Code installation
+Pull the code from
+https://bitbucket.org/balewski/digitalmind/src/master/graphcore/torch/neuronInverter_dist_iofree/
+
+edit 'data_path' in  hpar_gc4.yaml  to point at the data location
+
+*) quick test of code consistency on 1 IPU w/o poprun:
+Edit 'data_path'  hapr_dev.yaml as above
+execute:
+  ./train_replica.py --design hpar_dev --epochs 5 --cellName witness2c
+
+You should see the speed of ~40 samp/ms/IPU
+INFO - Epoch:  2, train step:   9, Avg samp/sec/replica: 40.5K
+and epoch duration of 5 sec.
+
+*) full scale training on mutipe IPUs, set m to number of IPUs
+m=8
+poprun --num-instances=$m --num-replicas=$m   ./train_replica.py --design hpar_gc4   --cellName witness2c --outPath outX 
+
+The 1M of training samples is shuffled before storing in HD5. They are divided evenly between $m IPUs and shuffled only within each IPU during the training.
+
+***) Hyperparameters & configuration
+
+*) hpar_gc.yaml contains all config for the ML model and GC (except the number of IPUs $m which are controlled by the poprun args)
+In particular, those 2 params are critical for the scaling on multiple IPUs:
+
+batch_size: 192
+replica_steps_per_iter: 30
+
+The above hpar_gc4 config works for 1,2,4, and 8 IPUs.
+The observed  trughputs  are
+1 IPU: 61 samp/ms/IPU  (base line)
+2 IPUs: 49 samp/ms/IPU
+4 IPUs: 41 samp/ms/IPU
+8 IPUs: 30 samp/ms/IPU  (50% losses due to comms)
+
+The code is setup to use the constant local BS ( const_local_batch: True   ) and LR rate is adjusted at a plateau of pseudo-validation loss. The fixed number of epochs is set at 161.
+For the last 3 epochs, the true validation loss is computed correctly using the inference graph rather than the training graph w/ LR=0.
+It cost several minutes but is done once at the end which is fine for those tests.
+
+Here are the optimal initial learing rates on M2000 and acheived val-loss for witnes2c data set:
+numIPU  iniLR  val_loss  
+1 	5e-4 	0.021
+2 	1e-3 	0.021
+4 	1e-3 	0.022
+8 	2e-3 	0.023
+16 	2e-3 	0.022  (using local BS=96) 
+
+For the 'witnes2c' data set the val-loss typically stabilizes after ~140 epochs - I keep the training running until 160 epochs.
+
+One can change the initial LR and the number of epochs  at the runtime (w/o editing hpar.yaml):
+
+ ./train_replica.py   --epochs 5 --initLR 2e-4 ...
+
+As an example, look at the scanHpar.sh showing how one can scan initLR a number of IPUs with a single shell script.
+
+
+***)  Results of the training
+The output of the training consists of the trained model (not used for anything at the moment) and the Tensor-Board plots stored in the --outPath directory
+
+One can view the TB plots from the laptop by setting a X11 tunnely with the following commands:
+ssh -A  -Y -L localhost:9998:localhost:9998 lr66-poplar3.usclt-pod1.graphcloud.ai
+(activate conda to have tensroboard)
+cd digitalMind/graphcore/torch/neuronInverter_dist_iofree/
+tensorboard --logdir=outABC --port 9998
+
+Next, on your laptop open browser and point it to
+ http://0.0.0.0:9998/ 
+
+
+= = = = = = = = Misc issues = = = = = 
+0) FYI: for the reference, the same Neuron-Inverter code running on multiple GPUs using PyTorch and Slurm is avaliable here:
+https://bitbucket.org/balewski/digitalmind/src/master/torch/examples-class/neuronInverter_dist_iofree/
+
+1.a) How do I measure how busy asre IPUs? Is there equivalent of nvidia-smi for IPUs?
+
+1 )Issue:  the graph compilation w/ BS=192 fails for 16 IPUs due to exhaustion of 503 GB of RAM on the host node
+
+2)Question:  is dropout varied for every sample or it is baked-in in the graph?, see this message:
+ [popart:session] [warning] Trying to set the random seed, but this session has no random behavior. Doing nothing.
+
+3) Issue: the code has a hack: the validation data loader needs to be used once before the training loop, see  toolbox/Trainer.py  line  80:
+   if self.params['gc_m2000']['pseudoValidation']: next(iter(self.valid_loader)) # HACK, otherwise  training loop will stuck on 1st val-pass
+
+If I disable this line 80 the training will get stuck on the first use of this loader during the training loop, in line 222
+ if self.params['gc_m2000']['pseudoValidation']:
+          self.model4train.setOptimizer(self.fakeOptimizer) # AdamW w/ LR-0
+          valid_logs = self.train_one_epoch(self.valid_loader)
+          self.model4train.setOptimizer(self.optimizer) # restore training optimizer
+
+
+4) I'm not too interested in disabling droput for psedu-validation because it makes the code generating the model ugly. But if you want to add this
+# When c = torch.tensor(1.), we are training
+# When c = torch.tensor(0.), we are evaluating
+class Model(torch.nn.Module):
+     def forward(self, x, c):
+         do = torch.nn.functional.dropout(x, p=0.5) * c
+         x = x * (1 - c)
+         out = do + x
+         return out
+
+And make sure all still works - it is fine with me.
+
+

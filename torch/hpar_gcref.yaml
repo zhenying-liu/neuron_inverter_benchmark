@@ -1,0 +1,55 @@
+# Neur-inver  config for reference obs vs. Graphcore
+#
+# choose data pathe depending on facility
+probe_type: excite_4prB8kHz  # Ontra4 on Cori
+
+data_path:
+  corigpu: /global/cfs/cdirs/m2043/balewski/neuronBBP-pack8kHzRam/probe_4prB8kHz/ontra4/etype_excite_v1/ # Ontra4 on Cori
+  perlmutter: /global/cfs/cdirs/m2043/balewski/neuronBBP-pack8kHzRam/probe_4prB8kHz/ontra4/etype_excite_v1/ # Ontra4 on PM=Cori
+  summit_ontra3: /gpfs/alpine/nro106/proj-shared/neuronBBP-pack8kHzRam/probe_3prB8kHz/ontra3/etype_8inhib_v1
+  summit: /gpfs/alpine/nro106/proj-shared/neuronBBP-pack8kHzRam/probe_4prB8kHz/ontra4/etype_excite_v1/ # ontra3
+
+max_epochs: 161  
+batch_size: 512
+const_local_batch: True   # True is faster  but LR changes w/ num GPUs
+# validation is computed if  epoch%period<len
+validation_period: [1, 1] # [ period, len] (epochs)
+
+num_data_workers: 4  
+log_freq_per_epoch: 3
+tb_show_graph: True
+
+save_checkpoint: False  # only when loss improves
+resume_checkpoint: False  # False: always start over 
+# warning: for multi-gpu & resume --> val_loss explodes - no loop over GPUs
+  
+# APEX: Nvidia streamlined data-parallel  training
+# AMP: Automatic Mixed Precision package
+# autotune: # activates cudnn.benchmark
+
+opt_pytorch:  
+    amp:  True
+    apex: True
+    autotune: True
+    zerograd: True
+
+train_conf:
+    warmup_epochs: 5
+    optimizer: [adam, 5e-3] # initLR
+    LRsched: { plateau_patience: 8, reduceFactor: 0.11  }
+    recover_upar_from_ustar: False # True: will un-do ontra scaling to upar*
+
+model:
+    myId:  a2f791f3a_ontra4
+    comment: very optimized ML model
+
+    conv_block: # CNN params
+        filter: [30, 90, 180]
+        kernel: [ 4,  4,  4]
+        pool:   [ 4,  4,  4]
+
+    batch_norm_flat: True
+
+    fc_block: # FC params w/o last layer
+        dims: [ 512, 512, 512, 256, 128 ]
+        dropFrac: 0.05

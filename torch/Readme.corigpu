@@ -1,0 +1,30 @@
+To run training:
+
+export MASTER_ADDR=`hostname`
+srun -n1 shifter ./train_dist.py
+
+
+To display TensorBoard on the laptop 
+
+To see TB on laptop use port forwarding:
+
+NERSC: from your laptop  in a new Xterm
+ssh -L localhost:9996:localhost:9996 balewski@cori.nersc.gov
+  module load cgpu  pytorch/1.7.1-gpu
+  cd /global/cscratch1/sd/balewski/tmp_digitalMind/neuInv/september/
+  tensorboard --logdir=manual --port 9996
+  tensorboard --logdir=./ --port 9996 
+
+Now you can open   http://0.0.0.0:9996/   in your browser on your laptop
+
+
+ = = = =
+ test job on 4 GPUs, cellName=witness2c,
+ ~/neuron_inverter_benchmark/torch> sbatch batchShifter.slr
+Submitted batch job 2253429
+Output: /global/cscratch1/sd/balewski/tmp_digitalMind/neuInv/september//benchmark/G4_lr
+INFO - Epoch 160, avr=8.58 +/-0.03 sec/epoch, elaT=1392.7 sec, nGpu=4, LR=8.86e-09, Loss: train=0.0256, val=0.0218 iniLR=5.0e-03
+
+ test job on 4 GPUs, cellName=bbp153,
+ Submitted batch job 2253687
+/global/cscratch1/sd/balewski/tmp_digitalMind/neuInv> vi benchmark/september/2253687

@@ -1,0 +1,50 @@
+#  choose data pathe depending on facility
+data_path: /home/balewskij/neuron-data/ # GraphCore, M2000, lr66
+probe_type: excite_4prB8kHz  
+
+max_epochs: 7 #
+batch_size: 16  # faster GC compilation
+
+# validation is on for epoch%period<len
+validation_period: [5, 1] # [ period, lenOn] (epochs), lenOn=0 is Off
+
+const_local_batch: True # True: faster, LR changes w/ num IPUs
+max_samples_per_epoch: 8000  # uncoment to skip data
+
+gc_m2000:
+    replica_steps_per_iter: 50
+    graph_caching: True
+    pseudoValidation: True
+    stagger_delay_sec:  2
+
+    
+num_data_workers: 2  
+log_freq_per_epoch: 3 
+
+save_checkpoint: False  # only when loss improves
+resume_checkpoint: False  # False: always start over 
+# warning: for multi-gpu & resume --> val_loss explodes - no loop over GPUs
+  
+
+train_conf:
+   warmup_epochs: 3
+   optimizer: [AdamW, 3e-5] # initLR
+   LRsched: { plateau_patience: 4, reduceFactor: 0.12  }
+   #LRsched: {  decay_epochs: 6, gamma: 0.11 } # use if no val-pass
+
+   
+model:
+    myId:  101  use BS=1, grap compilation ~20 sec, train 32k samp/sec
+    comment: small for fast compilation 
+
+    conv_block: # CNN params
+        filter: [ 4,  16,  32]
+        kernel: [ 4,  2,  2]
+        pool:   [ 4,  2,  2]
+
+    batch_norm_flat: True
+
+    fc_block: # FC params w/o last layer
+        dims: [ 128, 128 ]
+        dropFrac: 0.05
+    

@@ -1,0 +1,14 @@
+
+To display TensorBoard on your laptop do
+
+ssh  -i ~/.ssh/azure.pem -A  -Y -L localhost:9998:localhost:9998 balewskij@lr66-poplar3.usclt-pod1.graphcloud.ai 
+
+source ~/digitalMind/graphcore/mySetup.source 
+
+cd digitalMind/graphcore/torch/neuronInverter_dist_iofree/
+
+   tensorboard --logdir=outABC/tb_logs --port 9998
+
+$ pkill -9 tensorboard
+
+Now you can open http://0.0.0.0:9998/ in your browser on your laptop
