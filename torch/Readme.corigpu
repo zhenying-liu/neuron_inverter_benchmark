@@ -27,4 +27,5 @@ INFO - Epoch 160, avr=8.58 +/-0.03 sec/epoch, elaT=1392.7 sec, nGpu=4, LR=8.86e-
 
  test job on 4 GPUs, cellName=bbp153,
  Submitted batch job 2253687
-/global/cscratch1/sd/balewski/tmp_digitalMind/neuInv> vi benchmark/september/2253687
+/global/cscratch1/sd/balewski/tmp_digitalMind/neuInv/benchmark/september/2253687
+INFO - Epoch 160 , avr=4.75 +/-0.01 sec/epoch, elaT=776.4 sec, nGpu=4, LR=8.86e-09, Loss: train=0.0273, val=0.0287
