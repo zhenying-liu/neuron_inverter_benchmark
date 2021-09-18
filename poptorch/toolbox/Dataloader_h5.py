@@ -66,6 +66,7 @@ def get_data_loader(params,  inpMD,domain,popopts, verb=1):
                              num_workers=conf['num_data_workers'],
                              shuffle=shuffle,
                              auto_distributed_partitioning=False, #to serve all data
+                            #  mode=poptorch.DataLoaderMode.Async
                                      )
 
     dataloader.conf=conf
@@ -179,6 +180,9 @@ class Dataset_h5_neuronInverter(Dataset):
         assert idx< self.numLocFrames
         X=self.data_frames[idx]
         Y=self.data_parU[idx]
+        if self.conf['fp16_inputs']:
+            X = X.astype('float16')
+            Y = Y.astype('float16')
         return (X,Y)
 
         if self.conf['x_y_aux']: # predictions for Roy

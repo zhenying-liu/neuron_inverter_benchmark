@@ -18,7 +18,7 @@ Long training on 100 epochs on  10-cell data
 
 Multi-IPU training
 m=2
-poprun --num-instances=$m --num-replicas=$m   ./train_replica.py --design gc4  --outPath outX 
+poprun --num-instances=$m --num-replicas=$m   ./train_replica.py --design gc5  --outPath outX 
 
   
 '''
@@ -26,6 +26,7 @@ poprun --num-instances=$m --num-replicas=$m   ./train_replica.py --design gc4  -
 import sys,os
 from toolbox.Util_IOfunc import read_yaml, write_yaml
 from toolbox.Trainer import Trainer
+from toolbox import host_benchmark
 
 import argparse
 from pprint import pprint
@@ -37,7 +38,7 @@ import popdist
 
 def get_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--design", default='gc4',help='[.hpar.yaml] configuration of model and training')
+    parser.add_argument("--design", default='gc5',help='[.hpar.yaml] configuration of model and training')
     parser.add_argument("-v","--verbosity",type=int,choices=[0, 1, 2,3],  help="increase output verbosity", default=1, dest='verb')
     parser.add_argument("-o","--outPath", default='out/', help=' all outputs, also TB')
     parser.add_argument("--cellName", type=str, default='bbp153', help="cell shortName ")
@@ -103,6 +104,10 @@ if __name__ == '__main__':
         params['global_batch_size'] = tmp_batch_size
 
     trainer = Trainer(params)
+
+    # Benchmark the dataloader
+    host_benchmark.benchmark_throughput(trainer.train_loader)
+
     trainer.train_replica()
 
     if rank>0: exit(0)

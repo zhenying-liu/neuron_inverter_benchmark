@@ -130,7 +130,7 @@ dmypy.json
 # Add any directories, files, or patterns you don't want to be tracked by version control
 *~
 *pyc
-*yaml
+#*yaml
 data*
 out*
 __pycache__/

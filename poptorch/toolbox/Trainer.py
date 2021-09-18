@@ -62,6 +62,10 @@ class Trainer():
 
     popOpts = popdist.poptorch.Options()
     popOpts.deviceIterations(params['gc_m2000']['replica_steps_per_iter']) # Device "step"
+    if self.params['fp16_model']:
+      popOpts.Precision.setPartialsType(torch.half)
+    if params['gc_m2000']['enableSyntheticData']:
+      popOpts.enableSyntheticData(True)
     if params['gc_m2000']['graph_caching']:
       cachePath='./exec_cache'
       popOpts.enableExecutableCaching(cachePath)
@@ -106,6 +110,10 @@ class Trainer():
 
 
     myModel=NeuInvModel(params['model'], verb=self.verb)
+
+    if self.params['fp16_model']:
+      myModel = myModel.half()
+
     modelWloss=MyModelWithLoss(myModel)
     if self.isDist:
       hvd.broadcast_parameters(modelWloss.state_dict(), root_rank=0)
@@ -323,11 +331,12 @@ class Trainer():
     # Graphcore speciffic
     loss=0
     for ist, (data, target) in enumerate(dataLoader):
+        loss = 1
         _, loss_op = self.model4train(data, target)
         loss += loss_op.numpy()
         
         report_bs += data.size()[0]
-        #print('xx',i,data.size(),report_bs )
+        # print('x'*60, ' ' ,data.size(),report_bs )
         # only reports speed in mid-epoch
         if ist % self.params['log_freq_step'] == 0 and ist>0:
           if self.verb: logging.info('Epoch: %2d, train step: %3d, Avg samp/sec/replica: %.1fK'%(self.epoch, ist, 1e-3*report_bs / (time.time() - report_time)))
