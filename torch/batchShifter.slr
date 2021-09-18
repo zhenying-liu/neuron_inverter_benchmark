@@ -15,7 +15,8 @@
 #cellName=practice10c  # has 4.8M training samples
 cellName=witness2c # has 1M training samples
 #cellName=bbp153  # has 0.5M training samples
-design=hpar_gcref design=hpar_gcref  # reference jobs for Graphcore
+design=hpar_gcref   # reference jobs for Graphcore
+epochs=161
 
 nprocspn=${SLURM_NTASKS_PER_NODE}
 #nprocspn=1  # special case for partial use of full node
@@ -54,7 +55,7 @@ wrkDir=$wrkDir0/$wrkSufix
 echo "S:cellName=$cellName  initLRstr=$initLRstr jobId=$jobId  wrkSufix=$wrkSufix wrkDir=$wrkDir" 
 date
 
-export CMD=" python -u   train_dist.py --cellName $cellName   --facility $facility  --outPath ./out --design $design --jobId $jobId  $initLRstr "
+export CMD=" python -u   train_dist.py --cellName $cellName   --facility $facility  --outPath ./out --design $design --jobId $jobId  $initLRstr  --epochs $epochs "
 
 echo CMD=$CMD
 

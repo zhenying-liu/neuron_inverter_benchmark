@@ -1,0 +1,14 @@
+ = = = =
+ test job on 4 GPUs, cellName=witness2c,
+ ~/neuron_inverter_benchmark/torch> sbatch batchShifter.slr
+64098 161 epochs
+INFO - Epoch 160 took 4.6 sec, avr=4.78 +/-0.01 sec/epoch, elaT=774.2 sec, nGpu=4, LR=8.86e-09, Loss: train=0.0257, val=0.0216, iniLR=5.0e-03
+
+
+ test job on 4 GPUs, cellName=bbp153,
+64100 161 epochs
+
+wrkDir0=$SCRATCH/tmp_digitalMind/neuInv/benchmark/september/
+wrkDir=$wrkDir0/$wrkSufix
+INFO - Epoch 160 took 2.6 sec, avr=2.75 +/-0.01 sec/epoch, elaT=448.4 sec, nGpu=4, LR=8.86e-09, Loss: train=0.0262, val=0.0273,  iniLR=5.0e-03
+
