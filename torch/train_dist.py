@@ -33,7 +33,7 @@ import torch.distributed as dist
 
 def get_parser():  
   parser = argparse.ArgumentParser()
-  parser.add_argument("--design", default='hpar_gcref', help='[.hpar.yaml] configuration of model and training')
+  parser.add_argument("--design", default='gcref', help='[.hpar.yaml] configuration of model and training')
   parser.add_argument("-o","--outPath", default='/global/cscratch1/sd/balewski/tmp_digitalMind/neuInv/manual/', type=str)
   parser.add_argument("--facility", default='corigpu', help='data location differes')
   parser.add_argument("--cellName", type=str, default='bbp153', help="cell shortName ")
@@ -87,7 +87,7 @@ if __name__ == '__main__':
   params['verb'] =params['world_rank'] == 0
 
   #print('M:locRank:',params['local_rank'])
-  blob=read_yaml( args.design+'.yaml',verb=params['verb'])
+  blob=read_yaml( args.design+'.hpar.yaml',verb=params['verb'])
   params.update(blob)
   params['design']=args.design
 

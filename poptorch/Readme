@@ -3,12 +3,28 @@ To display TensorBoard on your laptop do
 
 ssh  -i ~/.ssh/azure.pem -A  -Y -L localhost:9998:localhost:9998 balewskij@lr66-poplar3.usclt-pod1.graphcloud.ai 
 
-source ~/digitalMind/graphcore/mySetup.source 
+source ~/neuron_inverter_benchmark/poptorc/mySetup.source 
 
-cd digitalMind/graphcore/torch/neuronInverter_dist_iofree/
+cd ~/neuron_inverter_benchmark/poptorch
 
    tensorboard --logdir=outABC/tb_logs --port 9998
 
 $ pkill -9 tensorboard
 
 Now you can open http://0.0.0.0:9998/ in your browser on your laptop
+
+
+ = = = =
+ 
+ test job on 4 GPUs, cellName=witness2c,
+m=4
+ poprun --num-instances=$m --num-replicas=$m   ./train_replica.py --design gc4  --outPath outY  --cellName witness2c 
+
+INFO - Epoch 160 , avr=5.93 +/-0.00 sec/epoc, elaT=991.0 sec, nIPU=4, Loss: train=0.0206, val=0.0219
+
+
+test job on 4IPUs, cellName=bbp153, optimizer: [AdamW, 1e-3] 
+
+ poprun --num-instances=$m --num-replicas=$m   ./train_replica.py --design hpar_gc4  --outPath outX 
+
+INFO - Epoch 160 took 13.1 sec, avr=3.19 +/-0.00 sec/epoc, elaT=934.0 sec, nIPU=4, LR=1.77e-09, Loss: train=0.0216, val=0.0274
