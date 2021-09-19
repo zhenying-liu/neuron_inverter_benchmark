@@ -6,17 +6,17 @@
 #SBATCH -o out/slurm-%j.out
 #-SBATCH  -x cgpu08 # block sick nodes
 #---CORI_GPU---
-#SBATCH  -N1 --ntasks-per-node=4  --gpus-per-task=1  --cpus-per-task=10
+#-SBATCH  -N1 --ntasks-per-node=4  --gpus-per-task=1  --cpus-per-task=10
 #-SBATCH -N8 --ntasks-per-node=8 --gpus-per-task=1 --cpus-per-task=10 --exclusive
 #---PERLMUTTER---
-#-SBATCH -N4 --ntasks-per-node=4 --gpus-per-task=1 --cpus-per-task=32 --exclusive 
+#SBATCH -N1 --ntasks-per-node=4 --gpus-per-task=1 --cpus-per-task=32 --exclusive 
 # - - - E N D    O F    SLURM    C O M M A N D S
 
 #cellName=practice10c  # has 4.8M training samples
 cellName=witness2c # has 1M training samples
 #cellName=bbp153  # has 0.5M training samples
-design=hpar_gcref   # reference jobs for Graphcore
-epochs=161
+design=gcref   # reference jobs for Graphcore
+epochs=31
 
 nprocspn=${SLURM_NTASKS_PER_NODE}
 #nprocspn=1  # special case for partial use of full node
@@ -41,8 +41,9 @@ if [[  $NERSC_HOST == cori ]]   ; then
     facility=corigpu
 
 elif [[  $NERSC_HOST == perlmutter ]]   ; then
-    echo "on Perlmutter-fixme"
+    echo "on Perlmutter"
     facility=perlmutter
+    module unload pytorch
     # bash -c 'printf "#include <stdio.h>\nint main() {  cudaFree(0);printf(\"cudaFree-done\"); }" > dummy.cu && nvcc -o dummy.exe dummy.cu'
     #  opening and closing a GPU context on each node to reset GPUs
     time srun -n$N -l --ntasks-per-node=1 toolbox/dummy.exe
@@ -59,7 +60,7 @@ export CMD=" python -u   train_dist.py --cellName $cellName   --facility $facili
 
 echo CMD=$CMD
 
-codeList="  train_dist.py    toolbox/ batchShifter.slr  $design.yaml  "
+codeList="  train_dist.py    toolbox/ batchShifter.slr  $design.hpar.yaml  "
 
 outPath=$wrkDir/out
 mkdir -p $outPath
@@ -67,12 +68,14 @@ cp -rp $codeList  $wrkDir
 cd  $wrkDir
 echo lsfPWD=`pwd`
 
-echo "starting  jobId=$jobId neurInv 2021-08 " `date` " outPath= $outPath"
+./toolbox/pm_continuous_log_energy.sh &
+eneId=$!
+
+echo "starting  jobId=$jobId neurInv 2021-08 " `date` " outPath= $outPath eneId=$eneId"
 
 toolbox/pm_log_energy_all.sh $jobId start
 time srun -n $G  shifter  bash  toolbox/driveOneTrain.sh  >& log.train
 toolbox/pm_log_energy_all.sh $jobId stop
 
-wait
 echo S:done
 date

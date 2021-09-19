@@ -9,7 +9,7 @@ if [ ${SLURM_PROCID} -eq 0 ] ; then
     python -V
     python -c 'import torch; print("D: pytorch:",torch.__version__)'
     echo D: survey-end
-    #nvidia-smi -l 5 >&L.smi_${SLURM_JOBID} &
+    nvidia-smi -l 5 >&L.smi_${SLURM_JOBID} &
 fi
 
 # the task command executed here:
