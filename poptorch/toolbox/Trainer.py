@@ -8,7 +8,6 @@ import numpy as np
 import torch
 from torch.utils.tensorboard import SummaryWriter
 import poptorch
-import popdist  
 import popdist.poptorch
 
 import logging
@@ -16,7 +15,7 @@ logging.basicConfig(format='%(levelname)s - %(message)s', level=logging.INFO)
 
 from toolbox.Model import NeuInvModel , MyModelWithLoss
 from toolbox.Dataloader_h5 import get_data_loader
-from toolbox.Util_IOfunc import read_yaml
+from toolbox.Util_IOfunc import read_yaml, save_checkpoint
 
 
 #............................
@@ -42,8 +41,8 @@ class Trainer():
         expDir2=os.path.join(expDir, 'checkpoints')
         if not os.path.isdir(expDir2):  os.makedirs(expDir2)
 
-    
-    params['checkpoint_path'] = os.path.join(expDir, 'checkpoints/ckpt.pth')
+
+    params['checkpoint_name'] =  'ckpt.pth'
     params['resuming'] =  params['resume_checkpoint'] and os.path.isfile(params['checkpoint_path'])
 
     
@@ -106,6 +105,12 @@ class Trainer():
 
 
     myModel=NeuInvModel(params['model'], verb=self.verb)
+    if self.isRank0: # save entirel model before training
+        modelF ='blank_model.pth'
+        params["blank_model"]=modelF
+        torch.save( myModel, params['out_path']+'/'+modelF)
+        logging.info('T: saved blank model to%s'%modelF)
+      
     modelWloss=MyModelWithLoss(myModel)
     if self.isDist:
       hvd.broadcast_parameters(modelWloss.state_dict(), root_rank=0)
@@ -116,12 +121,6 @@ class Trainer():
       #from torchsummary import summary
       #from torchinfo import summary
       #summary(myModel,(1,4,1600))#, batch_size=1, device='cuda')
-
-      # save entirel model before training
-      modelF = params['out_path']+'/blank_model.pth'
-      torch.save(myModel, modelF)
-      print('T: saved blank model',modelF)
-      params["blank_path"]=modelF
       
       
     tcf=params['train_conf']
@@ -301,10 +300,14 @@ class Trainer():
       
     #. . . . . . .  epoch loop end . . . . . . . .
     
-    if self.params['world_rank'] == 0:  # create summary record
+    if self.isRank0:  # create checkpoint and summary record
+      outF2=os.path.join(self.params['out_path'],self.params['checkpoint_name'])
+      save_checkpoint(outF2,self.model4train,self.optimizer,epoch)
+      logging.info('E:training saved:%s'%outF2)
+
       # add info to summary
       try:
-        rec={'epoch_stop':epoch+1, 'state':'model_trained','loss_train':float(train_logs['loss'])}
+        rec={'epoch_stop':epoch, 'state':'model_trained','loss_train':float(train_logs['loss'])}
         rec['trainTime_sec']=time.time()-startTrain
         if self.doVal: rec['loss_valid']=float(valid_logs['loss'])
         self.sumRec.update(rec)
