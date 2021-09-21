@@ -4,7 +4,7 @@ if [[  $NERSC_HOST != perlmutter ]]   ; then
     exit
 fi
 appname="${1:-myJob}"
-niter="${1:-10}"
+niter="${2:-10}"
 tsleep=3
 
 #echo started continuous energy logging  tsleep=$tsleep  niter=$niter

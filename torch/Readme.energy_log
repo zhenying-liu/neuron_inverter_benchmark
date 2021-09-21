@@ -1,0 +1,41 @@
+I have modified Sridutt script (sriduttb@lbl.gov) so it can run as independent shell task in the background for ~20 min and write the raw  counter values as CSV file.
+https://github.com/balewski/neuron_inverter_benchmark/blob/main/torch/toolbox/pm_continuous_log_energy.sh 
+I set the update period at 3 sec.
+The example output looks like this:
+ADD
+
+The counters measure exactly was the name suggest. 
+	energy - measures energy consumed by the whole node
+	cpu_energy - measures energy consumed by the CPUs
+	memory_energy - measures energy consumed by the memory
+	accel*_energy - measures energy consumed by the individual GPUs. They are four in number commensurate with the number of GPUs in each node.
+
+It is executed by the Slurm job script on the head node.
+I run the energy-monitor and ' srun -n'  concurrently  like this:
+
+- - - 
+#SBATCH -N1 --ntasks-per-node=4 --gpus-per-task=1 --cpus-per-task=32 --exclusive 
+nprocspn=${SLURM_NTASKS_PER_NODE}
+N=${SLURM_NNODES}
+G=$[ $N * $nprocspn ]
+jobId=${SLURM_JOBID}./toolbox/pm_continuous_log_energy.sh $jobId  300 >& log.energy_$jobId.csv &
+srun -n $G  train.py  >& log.train
+- - - 
+where train.py is my single GPU task.
+
+This is the actual Slurm script:
+https://github.com/balewski/neuron_inverter_benchmark/blob/main/torch/batchShifter.slr
+
+The output  log.energy_$jobId.csv is post-processed by this python script:
+https://github.com/balewski/neuron_inverter_benchmark/blob/main/torch/plotEnergyUse.py
+which converts energy integrals to power by dividing the difference in energy counter by the actual time between measurements.
+
+
+Example energy profile for Neuron-Inverter is posted here:
+https://docs.google.com/document/d/1dChKKF6hLnxqYn5X7MEcZ_1XN3r3Z2fbViWmqrvtZy4/edit?usp=sharing
+
+Table Data:
+https://docs.google.com/spreadsheets/d/1p81m0c7n8MZ0nrZPAjSfOIt3JT_cKgbEy9vjdPuhoCw/edit?usp=sharing
+
+Raw Data:
+/pscratch/sd/b/balewski/tmp_digitalMind/neuInv/benchmark/september/
