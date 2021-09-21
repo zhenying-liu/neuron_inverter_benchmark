@@ -11,7 +11,7 @@ import  time
 from pprint import pprint
 from toolbox.Plotter_Backbone import Plotter_Backbone
 from toolbox.Util_IOfunc import read_one_csv
-from toolbox.Util_Misc import  expand_dash_list,smoothF
+from toolbox.Util_Misc import  smoothF
 
 import argparse
 
@@ -19,18 +19,17 @@ def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-v","--verbosity",type=int,choices=[0, 1, 2],help="increase output verbosity", default=1, dest='verb')
 
-    parser.add_argument("-j", "--jobId",nargs="+",default=['64975'],  help=" blank separated list of job IDs, takes n1-n2")
+    parser.add_argument("-j", "--jobId",default='65244',  help=" job ID")
 
     parser.add_argument("-o", "--outPath", default='out/',help="output path for plots and tables")
 
-    parser.add_argument( "--smoothWindow", default=0, type=int,help=" smooth the data using a window with requested size (bins)")
+    parser.add_argument( "--smoothWindow", default=10, type=int,help=" smooth the data using a window with requested size (bins)")
     parser.add_argument( "-X","--noXterm", dest='noXterm',  action='store_true', default=False, help="disable X-term for batch mode")
 
 
     args = parser.parse_args()
     args.prjName='cosmoHpo'
 
-    args.jobId=expand_dash_list(args.jobId)
     #PM
     
     args.sourcePath='/pscratch/sd/b/balewski/tmp_digitalMind/neuInv/benchmark/september/'
@@ -41,8 +40,8 @@ def get_parser():
 
 #...!...!....................
 def ana_one_job(jobId,table):
-    tL=[]; eL={'node_energy':[],'cpu_energy':[],'memory_energy':[]}
-    for k in range(4): eL['gpu%d_energy'%k]=[]
+    tL=[]; eL={'node_ene_J':[],'cpu_ene_J':[],'memory_ene_J':[]}
+    for k in range(4): eL['gpu%d_ene_J'%k]=[]
     for rec in table:
         #print('rec',rec)
         t=float(rec['unix_millisec'])/1000.
@@ -55,7 +54,7 @@ def ana_one_job(jobId,table):
     # sume GPU energy
     for i in range(N):
         sum=0
-        for k in range(4):  sum+=eL['gpu%d_energy'%k][i]
+        for k in range(4):  sum+=eL['gpu%d_ene_J'%k][i]
         eL['4gpu_energy'].append(sum)
 
 
@@ -84,9 +83,6 @@ def ana_one_job(jobId,table):
     outD['power']=pL
     outD['time']=tL
     return outD
-    for i in range(N):
-        print(i, pL['node_energy'][i], pL['4gpu_energy'][i])
-
         
 #............................
 #............................
@@ -105,7 +101,7 @@ class Plotter_EnergyUse(Plotter_Backbone):
 
         tit='jobId=%s, node=%s'%(jobD['jobId'],jobD['hostname'])
         T=jobD['time']
-        for k in range(1,4): jobD['power'].pop('gpu%d_energy'%k)
+        #for k in range(1,4): jobD['power'].pop('gpu%d_ene_J'%k)
         for name in jobD['power']:
 
             Y=jobD['power'][name]
@@ -131,23 +127,11 @@ class Plotter_EnergyUse(Plotter_Backbone):
 args=get_parser()
 
 stockD={}
-for jobId in args.jobId:
-    inpF=args.sourcePath+'%s/energy_log.csv'%jobId
-    table,label=read_one_csv(inpF)
-    jobD=ana_one_job(jobId,table)
+jobId=args.jobId
+inpF=args.sourcePath+'%s/log.energy_%s.csv'%(jobId,jobId)
+table,label=read_one_csv(inpF)
+jobD=ana_one_job(jobId,table)
 plot=Plotter_EnergyUse(args)
 
 plot.one_job(jobD)
 plot.display_all('aa')
-
-ok1
-auxD={'jobId':jobId,'maxLoss':args.maxLoss}
-plot.overview(ordD, title='jid='+jobId,maxLoss=args.maxLoss)
-
-if 1:  # hpar correlations
-    plot.hpar_Train(ordD,auxD)    
-    #plot.hpar_FC(ordD,auxD)
-    #plot.hpar_CNN(ordD,auxD)
-
-
-

@@ -9,14 +9,13 @@
 #-SBATCH  -N1 --ntasks-per-node=4  --gpus-per-task=1  --cpus-per-task=10
 #-SBATCH -N8 --ntasks-per-node=8 --gpus-per-task=1 --cpus-per-task=10 --exclusive
 #---PERLMUTTER---
-#SBATCH -N1 --ntasks-per-node=4 --gpus-per-task=1 --cpus-per-task=32 --exclusive 
-# - - - E N D    O F    SLURM    C O M M A N D S
-
+#SBATCH -N1 --ntasks-per-node=2 --gpus-per-task=1 --cpus-per-task=32 --exclusive 
+# - - - E N D    O F    SLURM    C O M M A N D S4
 #cellName=practice10c  # has 4.8M training samples
 cellName=witness2c # has 1M training samples
 #cellName=bbp153  # has 0.5M training samples
 design=gcref   # reference jobs for Graphcore
-epochs=31
+epochs=161
 
 nprocspn=${SLURM_NTASKS_PER_NODE}
 #nprocspn=1  # special case for partial use of full node
@@ -39,7 +38,7 @@ env |grep NEUINV
 if [[  $NERSC_HOST == cori ]]   ; then
     echo "on Cori-GPU"
     facility=corigpu
-
+    module unload pytorch
 elif [[  $NERSC_HOST == perlmutter ]]   ; then
     echo "on Perlmutter"
     facility=perlmutter
@@ -68,14 +67,11 @@ cp -rp $codeList  $wrkDir
 cd  $wrkDir
 echo lsfPWD=`pwd`
 
-./toolbox/pm_continuous_log_energy.sh &
-eneId=$!
+./toolbox/pm_continuous_log_energy.sh $jobId  300 >& log.energy_$jobId.csv &
 
 echo "starting  jobId=$jobId neurInv 2021-08 " `date` " outPath= $outPath eneId=$eneId"
 
-toolbox/pm_log_energy_all.sh $jobId start
 time srun -n $G  shifter  bash  toolbox/driveOneTrain.sh  >& log.train
-toolbox/pm_log_energy_all.sh $jobId stop
 
 echo S:done
 date
