@@ -119,7 +119,7 @@ class Trainer():
       summary(self.model,(1,4,1600))
       if self.verb>1: print(self.model)
 
-      # save entirel model before training
+     if self.isRank0: # save entirel model before training
       modelF ='blank_model.pth'
       params["blank_model"]=modelF
       torch.save( self.model, params['out_path']+'/'+modelF)

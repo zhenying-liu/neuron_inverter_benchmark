@@ -6,7 +6,7 @@ __email__ = "janstar1122@gmail.com"
 Neuron-Inverter adopet for Graphcore 
 
 Quick test:
- ./train_replica.py --design hpar_dev  --epochs 5
+ ./train_replica.py --design dev  --epochs 5
 
 For LSTM do:
   ./train_replica.py --design hpar_dev3 (takes longer to start !!!)
@@ -18,13 +18,13 @@ Long training on 100 epochs on  10-cell data
 
 Multi-IPU training
 m=2
-poprun --num-instances=$m --num-replicas=$m   ./train_replica.py --design gc4  --outPath outX 
+poprun --num-instances=$m --num-replicas=$m   ./train_replica.py --design gc4  --outPath outY --cellName witness2c
 
   
 '''
 
 import sys,os
-from toolbox.Util_IOfunc import read_yaml, write_yaml
+from toolbox.Util_IOfunc  import read_yaml, write_yaml
 from toolbox.Trainer import Trainer
 
 import argparse
@@ -109,5 +109,9 @@ if __name__ == '__main__':
     
     sumF=args.outPath+'/sum_train.yaml'
     write_yaml(trainer.sumRec, sumF) 
+
+    if 0:
+        epoch=trainer.sumRec['epoch_stop']
+        
 
     print("M:done design", args.design)

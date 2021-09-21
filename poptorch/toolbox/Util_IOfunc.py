@@ -6,7 +6,7 @@ import time, os
 import ruamel.yaml  as yaml
 import warnings
 warnings.simplefilter('ignore', yaml.error.MantissaNoDotYAML1_1Warning)
-
+import torch # for checkpoints
 from pprint import pprint
 import csv
 
@@ -54,3 +54,18 @@ def write_one_csv(fname,rowL,colNameL):
         for row in rowL:
             dw.writerow(row)    
 
+
+#...!...!..................
+def save_checkpoint( checkpoint_path, model,optimizer,epoch):
+    torch.save({ 'epoch': epoch, 'model_state': model.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict()}, checkpoint_path)
+
+#...!...!..................
+def restore_checkpoint( checkpoint_path,model,optimizer=None):
+    checkpoint = torch.load(checkpoint_path)
+    model=model.load_state_dict(checkpoint['model_state'])
+    if optimizer!=None:
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+    startEpoch = checkpoint['epoch'] + 1
+    return startEpoch
+                            
