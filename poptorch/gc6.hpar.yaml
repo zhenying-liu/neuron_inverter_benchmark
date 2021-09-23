@@ -8,7 +8,7 @@ data_path: /localdata/alext/data/neuron-data/
 probe_type: excite_4prB8kHz  
 
 max_epochs: 161 
-batch_size: 192 # works for 1 IPU
+batch_size: 128 # works for 1 IPU
 #batch_size: 96 # works for 16 IPUs
 # validation is on for epoch%period<len
 validation_period: [10, 10] # [ period, lenOn] (epochs), lenOn=0 is Off
@@ -20,9 +20,9 @@ gc_m2000:
     replica_steps_per_iter: 30
     graph_caching: True
     pseudoValidation: True
-    stagger_delay_sec:  2
+    stagger_delay_sec:  0
     enableSyntheticData: False
-    gradientAccumulation: 1
+    gradientAccumulation: 2
 
 fp16_inputs: False
 fp16_model: False

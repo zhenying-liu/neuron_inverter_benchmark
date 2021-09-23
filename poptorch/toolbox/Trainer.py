@@ -62,6 +62,8 @@ class Trainer():
 
     popOpts = popdist.poptorch.Options()
     popOpts.deviceIterations(params['gc_m2000']['replica_steps_per_iter']) # Device "step"
+    popOpts.Training.gradientAccumulation(params['gc_m2000']['gradientAccumulation'])
+
     if self.params['fp16_model']:
       popOpts.Precision.setPartialsType(torch.half)
     if params['gc_m2000']['enableSyntheticData']:
@@ -157,6 +159,7 @@ class Trainer():
     if self.verb: logging.info("Poptorch create model start ...")
     self.model4train = poptorch.trainingModel(modelWloss, options=popOpts, optimizer=self.optimizer)
     if  self.valPeriod[1]>0:
+        popOpts.Training.gradientAccumulation(1)
         self.model4infer = poptorch.inferenceModel(modelWloss, options=popOpts)
         if self.verb: logging.info("Poptorch create inference model done")
 
