@@ -88,7 +88,7 @@ class Trainer():
     if self.valPeriod[1]>0:
         self.valid_loader = get_data_loader(params,  inpMD,'val', popOpts, verb=self.verb)
         if self.params['gc_m2000']['pseudoValidation']: next(iter(self.valid_loader)) # HACK, otherwise  training loop will stuck on 1st val-pass
-        if self.verb: logging.info('valid-data: %d steps, localBS*repStep=%d'%(len(self.valid_loader),self.valid_loader.batch_size))    
+        if self.verb: logging.info('valid-data: %d steps, localBS*repStep*repli=%d'%(len(self.valid_loader),self.valid_loader.batch_size))    
 
     if self.verb:
       logging.info('rank %d of %d, data loader initialized, valPeriod=%s'%(params['world_rank'],params['world_size'],str(self.valPeriod)))
@@ -249,10 +249,10 @@ class Trainer():
               self.model4infer.detachFromDevice() #GC needs it
               if self.model4train._executable:  self.model4train.attachToDevice()
               t5 = time.time()
-          loss_val=valid_logs['loss']
+          loss_val=np.mean(valid_logs['loss'])
         
       tend = time.time()        
-      loss_train=train_logs['loss']
+      loss_train=np.mean(train_logs['loss'])
       
                       
       if epoch >= warmup_epochs and  self.doVal :
@@ -293,7 +293,7 @@ class Trainer():
           else:
             tAvr=tStd=0
                     
-          txt='Epoch %d took %.1f sec, avr=%.2f +/-%.2f sec/epoc, elaT=%.1f sec, nIPU=%d, LR=%.2e, Loss: train=%.4f'%(epoch, totT, tAvr,tStd,time.time() -startTrain,self.params['world_size'] ,self.optimizer.param_groups[0]['lr'],loss_train)
+          txt='Epoch %d took %.1f sec, avr=%.2f +/-%.2f sec/epoc, elaT=%.1f sec, nIPU=%d, LR=%.2e, Loss: train=%.4f'%(epoch, totT, tAvr,tStd,time.time() -startTrain,self.params['total_replicas'] ,self.optimizer.param_groups[0]['lr'],loss_train)
           if self.doVal:
             pseu='pseudo-' if self.params['gc_m2000']['pseudoValidation'] else ''
             txt+=', %sval=%.4f'%(pseu,loss_val)
@@ -315,9 +315,9 @@ class Trainer():
     if self.params['world_rank'] == 0:  # create summary record
       # add info to summary
       try:
-        rec={'epoch_stop':epoch+1, 'state':'model_trained','loss_train':float(train_logs['loss'])}
+        rec={'epoch_stop':epoch+1, 'state':'model_trained','loss_train':float(loss_train)}
         rec['trainTime_sec']=time.time()-startTrain
-        if self.doVal: rec['loss_valid']=float(valid_logs['loss'])
+        if self.doVal: rec['loss_valid']=float(loss_val)
         self.sumRec.update(rec)
       except:
          if self.params['log_to_screen'] and self.verb:

@@ -89,7 +89,8 @@ if __name__ == '__main__':
     # ... rank dependent config .....
     params['world_size'] = world_size
     params['world_rank'] = rank
-   
+    params['total_replicas']=total_replicas
+    
     params['verb']= args.verb * (rank==0)
     params['job_id']=args.jobId
     
@@ -98,7 +99,7 @@ if __name__ == '__main__':
     tmp_batch_size=params.pop('batch_size')
     if params['const_local_batch']: # faster but LR changes w/ num GPUs
         params['local_batch_size'] =tmp_batch_size
-        params['global_batch_size'] =tmp_batch_size*params['world_size']
+        params['global_batch_size'] =tmp_batch_size*params['total_replicas']
     else:
         params['local_batch_size'] = int(tmp_batch_size//params['world_size'])
         params['global_batch_size'] = tmp_batch_size
