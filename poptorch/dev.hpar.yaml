@@ -18,7 +18,7 @@ gc_m2000:
     stagger_delay_sec:  2
 
     
-num_data_workers: 2  
+num_data_workers: 8
 log_freq_per_epoch: 3 
 
 save_checkpoint: False  # only when loss improves

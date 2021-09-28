@@ -4,10 +4,13 @@ Instruction on how to run Neuron-Inverter on multiple IPUs
 Updated 2021-08-25  
 
 ***) Training data ():
-Upload this 2 files from 
+Upload this  files from 
+physcial: /global/cfs/cdirs/m2043/www/tryML/
 https://portal.nersc.gov/cfs/m2043/tryML/
 meta.cellSpike_excite_4prB8kHz.yaml
-witness2c_excite.cellSpike_4prB8kHz.data.h5  (29 GB)
+bbp153_excite.cellSpike_4prB8kHz.data.h5     (15GB  0.5M samples)
+witness2c_excite.cellSpike_4prB8kHz.data.h5  (29GB, 1M samples)
+practice10c_excite.cellSpike_4prB8kHz.data.h5  (144GB, 5M samples)
 
 and place them at the local directory on the M2000
 The witness2c...h5 contains ~1M training samples, 100 k validation, and 100k test samples
@@ -15,8 +18,9 @@ The witness2c...h5 contains ~1M training samples, 100 k validation, and 100k tes
 
 ***) Code installation
 Pull the code from
-https://bitbucket.org/balewski/digitalmind/src/master/graphcore/torch/neuronInverter_dist_iofree/
+https://github.com/balewski/neuron_inverter_benchmark/tree/main
 
+git clone git@github.com:balewski/neuron_inverter_benchmark.git 
 edit 'data_path' in  hpar_gc4.yaml  to point at the data location
 
 *) quick test of code consistency on 1 IPU w/o poprun:

@@ -18,7 +18,7 @@ Long training on 100 epochs on  10-cell data
 
 Multi-IPU training
 m=2
-poprun --num-instances=$m --num-replicas=$m   ./train_replica.py --design gc4  --outPath outY --cellName witness2c
+poprun --num-instances=$m --num-replicas=$m   ./train_replica.py --design gc4  --outPath outZ --cellName witness2c
 
   
 '''
@@ -67,10 +67,9 @@ if __name__ == '__main__':
     replicas_per_rank=total_replicas//world_size
     ipus_per_replica=popdist.getNumIpusPerReplica()
     total_ipus=total_replicas*ipus_per_replica
-    print("M:I am rank=%d of world=%d on host=%s, locReplias=%d devId %d totReplias=%d totIpus=%d repl/ranl=%d ipu/repl=%d"% (rank, world_size, host,locReplicas,device_id,total_replicas,total_ipus,replicas_per_rank,ipus_per_replica))
+    print("M:I am rank=%d of world=%d on host=%s, locReplias=%d devId %d totReplias=%d totIpus=%d replicas/rank=%d ipu/repl=%d"% (rank, world_size, host,locReplicas,device_id,total_replicas,total_ipus,replicas_per_rank,ipus_per_replica))
     # ....  GC survey done
-
-
+    
     args = get_parser()
     #for arg in vars(args):  print( 'myArg:',arg, getattr(args, arg))
     params = read_yaml( args.design+'.hpar.yaml',verb=rank==0)
@@ -88,6 +87,7 @@ if __name__ == '__main__':
     # ... rank dependent config .....
     params['world_size'] = world_size
     params['world_rank'] = rank
+    params['total_replicas']=total_replicas
    
     params['verb']= args.verb * (rank==0)
     params['job_id']=args.jobId
@@ -97,7 +97,7 @@ if __name__ == '__main__':
     tmp_batch_size=params.pop('batch_size')
     if params['const_local_batch']: # faster but LR changes w/ num GPUs
         params['local_batch_size'] =tmp_batch_size
-        params['global_batch_size'] =tmp_batch_size*params['world_size']
+        params['global_batch_size'] =tmp_batch_size*params['total_replicas']
     else:
         params['local_batch_size'] = int(tmp_batch_size//params['world_size'])
         params['global_batch_size'] = tmp_batch_size

@@ -15,16 +15,23 @@ Now you can open http://0.0.0.0:9998/ in your browser on your laptop
 
 
  = = = =
- 
- test job on 4 GPUs, cellName=witness2c,
-m=4
- poprun --num-instances=$m --num-replicas=$m   ./train_replica.py --design gc4  --outPath outY  --cellName witness2c 
 
+ test job on 8 IPUs, cellName=practice10c
+m=8
+ poprun --num-instances=$m --num-replicas=$m   ./train_replica.py --design gc4  --outPath outZ  --cellName practice10c
+INFO - Epoch 160 took 31.3 sec, avr=18.69 +/-0.00 sec/epoc, elaT=3051.0 sec, nIPU=8, LR=1.77e-09, Loss: train=0.0306, val=0.0280
+
+
+test job on 4 IPUs, cellName=witness2c,
+m=4
+ poprun --num-instances=$m --num-replicas=$m   ./train_replica.py --design gc4  --outPath outY  --cellName witness2c
+ 
 INFO - Epoch 160 , avr=5.93 +/-0.00 sec/epoc, elaT=991.0 sec, nIPU=4, Loss: train=0.0206, val=0.0219
 
 
 test job on 4IPUs, cellName=bbp153, optimizer: [AdamW, 1e-3] 
-
  poprun --num-instances=$m --num-replicas=$m   ./train_replica.py --design hpar_gc4  --outPath outX 
 
 INFO - Epoch 160 took 13.1 sec, avr=3.19 +/-0.00 sec/epoc, elaT=934.0 sec, nIPU=4, LR=1.77e-09, Loss: train=0.0216, val=0.0274
+
+

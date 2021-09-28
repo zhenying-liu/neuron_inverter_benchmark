@@ -57,7 +57,7 @@ def get_data_loader(params,  inpMD,domain,popopts, verb=1):
     params['model']['inputShape']=list(dataset.data_frames.shape[1:])
     params['model']['outputSize']=dataset.data_parU.shape[1]
 
-    #shuffle=domain=='train'  # use False for reproducibility
+    #shuffle=domain=='train'  # use False only for reproducibility
     shuffle=True # both: train & val
 
     # Graphcore speciffic
@@ -88,8 +88,6 @@ class Dataset_h5_neuronInverter(Dataset):
         assert self.numLocFrames>0
         assert self.conf['world_rank']>=0
 
-        #if type(data)==torch.Tensor: empty=torch.FloatTensor(empty)
-        # self.data_frames=  torch.HalfTensor(self.data_frames)
         if self.verb :
             logging.info(' DS:load-end %s locSamp=%d, X.shape: %s type: %s'%(self.conf['domain'],self.numLocFrames,str(self.data_frames.shape),self.data_frames.dtype))
             #print(' DS:Xall',self.data_frames.shape,self.data_frames.dtype)
