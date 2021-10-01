@@ -17,32 +17,32 @@ The witness2c...h5 contains ~1M training samples, 100 k validation, and 100k tes
 Pull the code from
 https://bitbucket.org/balewski/digitalmind/src/master/graphcore/torch/neuronInverter_dist_iofree/
 
-edit 'data_path' in  hpar_gc4.yaml  to point at the data location
+edit 'data_path' in  gc4.yaml  to point at the data location
 
 *) quick test of code consistency on 1 IPU w/o poprun:
 Edit 'data_path'  hapr_dev.yaml as above
 execute:
-  ./train_replica.py --design hpar_dev --epochs 5 --cellName witness2c
+  ./train_replica.py --design dev --epochs 5 --cellName witness2c
 
-You should see the speed of ~40 samp/ms/IPU
-INFO - Epoch:  2, train step:   9, Avg samp/sec/replica: 40.5K
-and epoch duration of 5 sec.
+You should see the speed of ~80 samp/ms/IPU
+INFO - Epoch:  2, train step:   3, Avg samp/sec/instance: 80.6K
+and epoch duration of 0.13 sec.
 
 *) full scale training on mutipe IPUs, set m to number of IPUs
 m=8
-poprun --num-instances=$m --num-replicas=$m   ./train_replica.py --design hpar_gc4   --cellName witness2c --outPath outX 
+poprun --num-instances=$m --num-replicas=$m   ./train_replica.py --design gc4   --cellName witness2c --outPath outX 
 
 The 1M of training samples is shuffled before storing in HD5. They are divided evenly between $m IPUs and shuffled only within each IPU during the training.
 
 ***) Hyperparameters & configuration
 
-*) hpar_gc.yaml contains all config for the ML model and GC (except the number of IPUs $m which are controlled by the poprun args)
+*) gc.yaml contains all config for the ML model and GC (except the number of IPUs $m which are controlled by the poprun args)
 In particular, those 2 params are critical for the scaling on multiple IPUs:
 
 batch_size: 192
 replica_steps_per_iter: 30
 
-The above hpar_gc4 config works for 1,2,4, and 8 IPUs.
+The above gc4 config works for 1,2,4, and 8 IPUs.
 The observed  trughputs  are
 1 IPU: 61 samp/ms/IPU  (base line)
 2 IPUs: 49 samp/ms/IPU

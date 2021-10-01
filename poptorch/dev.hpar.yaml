@@ -1,9 +1,9 @@
 #  choose data pathe depending on facility
-data_path: /home/balewskij/neuron-data/ # GraphCore, M2000, lr66
+data_path: /localdata/alext/data/neuron-data/
 probe_type: excite_4prB8kHz  
 
 max_epochs: 7 #
-batch_size: 16  # faster GC compilation
+batch_size: 192  # faster GC compilation
 
 # validation is on for epoch%period<len
 validation_period: [5, 1] # [ period, lenOn] (epochs), lenOn=0 is Off
@@ -12,13 +12,17 @@ const_local_batch: True # True: faster, LR changes w/ num IPUs
 max_samples_per_epoch: 8000  # uncoment to skip data
 
 gc_m2000:
-    replica_steps_per_iter: 50
+    replica_steps_per_iter: 9
     graph_caching: True
     pseudoValidation: True
-    stagger_delay_sec:  2
+    stagger_delay_sec:  0
+    enableSyntheticData: False
+    gradientAccumulation: 1
 
-    
-num_data_workers: 2  
+fp16_inputs: False
+fp16_model: False
+
+num_data_workers: 10  
 log_freq_per_epoch: 3 
 
 save_checkpoint: False  # only when loss improves

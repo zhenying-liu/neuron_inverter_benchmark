@@ -151,3 +151,9 @@ old*
 out/
 dummy*
 exec_cache/
+
+*.cbor
+*.pop
+*.a
+*.pop_cache
+*.zip

@@ -342,7 +342,7 @@ class Trainer():
         # print('x'*60, ' ' ,data.size(),report_bs )
         # only reports speed in mid-epoch
         if ist % self.params['log_freq_step'] == 0 and ist>0:
-          if self.verb: logging.info('Epoch: %2d, train step: %3d, Avg samp/sec/replica: %.1fK'%(self.epoch, ist, 1e-3*report_bs / (time.time() - report_time)))
+          if self.verb: logging.info('Epoch: %2d, train step: %3d, Avg samp/sec/instance: %.1fK'%(self.epoch, ist, 1e-3*report_bs / (time.time() - report_time)))
           report_time = time.time()
           report_bs = 0
 
