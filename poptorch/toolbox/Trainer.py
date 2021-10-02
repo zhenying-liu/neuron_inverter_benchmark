@@ -32,6 +32,7 @@ class Trainer():
     self.isRank0=params['world_rank']==0
     self.valPeriod=params['validation_period']
     self.isDist=params['world_size']>1
+    self.compiled = False
     
     self.device = popdist.popdist_core.getDeviceId()
     logging.info('T:ini world rank %d of %d, host=%s  see device=%s'%(params['world_rank'],params['world_size'],socket.gethostname(),str(self.device)))
@@ -334,6 +335,11 @@ class Trainer():
     # Graphcore speciffic
     loss=0
     for ist, (data, target) in enumerate(dataLoader):
+        if not self.compiled:
+          self.model4train.compile(data, target)
+          self.compiled = True
+          report_time = time.time() # reset timer
+
         loss = 1
         _, loss_op = self.model4train(data, target)
         loss += loss_op.numpy()
