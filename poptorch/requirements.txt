@@ -1,2 +1,5 @@
+numpy
+tensorboard
+h5py
 horovod
 ruamel.yaml

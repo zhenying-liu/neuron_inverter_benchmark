@@ -1,6 +1,7 @@
 __author__ = "Jan Balewski"
 __email__ = "janstar1122@gmail.com"
 
+import copy # to create copy of options
 import os,time
 from pprint import pprint,pformat
 import socket  # for hostname
@@ -24,6 +25,32 @@ from toolbox.Util_IOfunc import read_yaml
 #............................
 class Trainer():
 #...!...!..................
+
+  def _get_poptorch_options(self, params, for_training):
+
+    popOpts = popdist.poptorch.Options()
+    popOpts.deviceIterations(params['gc_m2000']['replica_steps_per_iter']) # Device "step"
+
+    if for_training:
+      popOpts.Training.gradientAccumulation(params['gc_m2000']['gradientAccumulation'])
+    else:
+      popOpts.Training.gradientAccumulation(1)
+
+    if self.params['fp16_model']:
+      popOpts.Precision.setPartialsType(torch.half)
+    if params['gc_m2000']['enableSyntheticData']:
+      popOpts.enableSyntheticData(True)
+    if params['gc_m2000']['graph_caching']:
+      cachePath='./exec_cache'
+      popOpts.enableExecutableCaching(cachePath)
+      if  self.verb: logging.info('caching to %s'%(cachePath))
+
+    if self.isDist:
+      popOpts.randomSeed(42+ params['world_rank']) # force the different Droput sequence on each IPU
+
+    return popOpts
+
+
   def __init__(self, params):
 
     self.params = params
@@ -60,31 +87,18 @@ class Trainer():
     bulk=read_yaml(metaF,verb=self.verb)
     inpMD=bulk['dataInfo']
     self.inpMD=inpMD
-
-    popOpts = popdist.poptorch.Options()
-    popOpts.deviceIterations(params['gc_m2000']['replica_steps_per_iter']) # Device "step"
-    popOpts.Training.gradientAccumulation(params['gc_m2000']['gradientAccumulation'])
-
-    if self.params['fp16_model']:
-      popOpts.Precision.setPartialsType(torch.half)
-    if params['gc_m2000']['enableSyntheticData']:
-      popOpts.enableSyntheticData(True)
-    if params['gc_m2000']['graph_caching']:
-      cachePath='./exec_cache'
-      popOpts.enableExecutableCaching(cachePath)
-      if  self.verb: logging.info('caching to %s'%(cachePath))
       
     if self.isDist:
       import horovod.torch as hvd
       hvd.init()
       self.hvd=hvd
       if self.verb: logging.info('T:horovod started, num ranks=%d, stagger_delay %d sec/rank'%(hvd.size(),params['gc_m2000']['stagger_delay_sec']))
-      popOpts.randomSeed(42+ params['world_rank']) # force the different Droput sequence on each IPU
 
       # it may be an overkill, but w-load of 500 can't be healthy, mostlikely it is due to IO from up to 16 HD5 from data loaders and/or  rading cached graphs
       delayMe=params['gc_m2000']['stagger_delay_sec']* params['world_rank']
       time.sleep(delayMe)
-      
+
+    popOpts = self._get_poptorch_options(params, for_training=True)
     self.train_loader = get_data_loader(params, inpMD,'train', popOpts,verb=self.verb)
     if self.valPeriod[1]>0:
         self.valid_loader = get_data_loader(params,  inpMD,'val', popOpts, verb=self.verb)
@@ -160,8 +174,8 @@ class Trainer():
     if self.verb: logging.info("Poptorch create model start ...")
     self.model4train = poptorch.trainingModel(modelWloss, options=popOpts, optimizer=self.optimizer)
     if  self.valPeriod[1]>0:
-        popOpts.Training.gradientAccumulation(1)
-        self.model4infer = poptorch.inferenceModel(modelWloss, options=popOpts)
+        inferencePopOpts = self._get_poptorch_options(params, for_training=False)        
+        self.model4infer = poptorch.inferenceModel(modelWloss, options=inferencePopOpts)
         if self.verb: logging.info("Poptorch create inference model done")
 
     # choose type of LR decay schedule
@@ -299,7 +313,7 @@ class Trainer():
             pseu='pseudo-' if self.params['gc_m2000']['pseudoValidation'] else ''
             txt+=', %sval=%.4f'%(pseu,loss_val)
           if epoch%5==0:
-             self.TBSwriter.add_text('summary',txt , epoch)
+              self.TBSwriter.add_text('summary',txt , epoch)
           if self.verb:  logging.info(txt )
 
       if self.isRank0:
