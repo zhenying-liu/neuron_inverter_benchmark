@@ -6,6 +6,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
+import poptorch
 
 from torch.autograd import Variable  #can be differentiated, needed by LSTM
 #-------------------
@@ -129,6 +130,9 @@ class NeuInvModel(nn.Module):
 #...!...!..................
     def forward(self, x, target=None):
         if self.verb>2: print('J: inF',x.shape)
+
+        x = poptorch.set_overlap_for_input(
+            x, poptorch.OverlapMode.OverlapAccumulationLoop)
 
         if self.hasCNN:
             x=self.forwardCnnOnly(x)

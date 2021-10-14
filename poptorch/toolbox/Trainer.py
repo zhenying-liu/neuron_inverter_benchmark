@@ -36,6 +36,8 @@ class Trainer():
     else:
       popOpts.Training.gradientAccumulation(1)
 
+    popOpts.TensorLocations.numIOTiles(params['gc_m2000']['num_io_tiles'])
+
     if self.params['fp16_model']:
       popOpts.Precision.setPartialsType(torch.half)
     if params['gc_m2000']['enableSyntheticData']:
