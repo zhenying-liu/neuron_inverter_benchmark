@@ -23,7 +23,7 @@ gc_m2000:
     stagger_delay_sec:  0
     enableSyntheticData: False
     gradientAccumulation: 1
-    num_io_tiles: 0
+    num_io_tiles: 32
 
 fp16_inputs: False
 fp16_model: False
