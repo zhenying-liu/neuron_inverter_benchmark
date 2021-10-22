@@ -1,16 +1,20 @@
 Instruction on how to run Neuron-Inverter on multiple IPUs 
 (The outstanding issues are listed at the bottom)
 
-Updated 2021-08-25  
+Updated 2021-10-22  
 
 ***) Training data ():
-Upload this 2 files from 
+Download this 2 files from 
 https://portal.nersc.gov/cfs/m2043/tryML/
 meta.cellSpike_excite_4prB8kHz.yaml
 witness2c_excite.cellSpike_4prB8kHz.data.h5  (29 GB)
 
 and place them at the local directory on the M2000
 The witness2c...h5 contains ~1M training samples, 100 k validation, and 100k test samples
+
+NOTE: larger training data file (practice10c) w/ 5M samples, 144GB
+Pull it from here:
+https://portal.nersc.gov/cfs/m2043/tryML/practice10c_excite.cellSpike_4prB8kHz.data.h5
 
 
 ***) Code installation
