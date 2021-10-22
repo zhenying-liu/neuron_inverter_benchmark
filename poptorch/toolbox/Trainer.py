@@ -36,7 +36,10 @@ class Trainer():
     else:
       popOpts.Training.gradientAccumulation(1)
 
-    popOpts.TensorLocations.numIOTiles(params['gc_m2000']['num_io_tiles'])
+    if params['gc_m2000']['num_io_tiles'] >= 32:
+      popOpts.TensorLocations.numIOTiles(params['gc_m2000']['num_io_tiles'])
+    popOpts.setExecutionStrategy(poptorch.ShardedExecution())
+    popOpts.anchorMode(poptorch.AnchorMode.All)
 
     if self.params['fp16_model']:
       popOpts.Precision.setPartialsType(torch.half)
@@ -128,7 +131,7 @@ class Trainer():
     self.params['log_freq_step']=max(1,len(self.train_loader)//self.params['log_freq_per_epoch'])
 
 
-    myModel=NeuInvModel(params['model'], verb=self.verb)
+    myModel=NeuInvModel(params, verb=self.verb)
 
     if self.params['fp16_model']:
       myModel = myModel.half()

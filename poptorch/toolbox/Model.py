@@ -14,9 +14,11 @@ from torch.autograd import Variable  #can be differentiated, needed by LSTM
 #-------------------
 class NeuInvModel(nn.Module):
 #...!...!..................
-    def __init__(self,hpar,verb=0):
+    def __init__(self,params,verb=0):
         super(NeuInvModel, self).__init__()
         
+        self.params=params
+        hpar = params['model']
         self.verb=verb
         if 'conv_block' in hpar:
             self.add_CNN_block(hpar)
@@ -131,8 +133,9 @@ class NeuInvModel(nn.Module):
     def forward(self, x, target=None):
         if self.verb>2: print('J: inF',x.shape)
 
-        x = poptorch.set_overlap_for_input(
-            x, poptorch.OverlapMode.OverlapAccumulationLoop)
+        if self.params['gc_m2000']['num_io_tiles'] >= 32:
+            x = poptorch.set_overlap_for_input(
+                x, poptorch.OverlapMode.OverlapAccumulationLoop)
 
         if self.hasCNN:
             x=self.forwardCnnOnly(x)
