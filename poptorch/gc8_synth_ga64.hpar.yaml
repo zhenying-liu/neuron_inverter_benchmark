@@ -1,0 +1,60 @@
+comment: LR sched and BS optimized for 1 IPU traning
+#  used for code acceleration by GC team 
+
+# choose data path depending on facility
+#data_path: /home/balewskij/neuron-data/  # GraphCore, M2000, lr66
+data_path: /localdata/alext/data/neuron-data/
+
+probe_type: excite_4prB8kHz  
+
+max_epochs: 161 
+batch_size: 128 # works for 1 IPU
+#batch_size: 96 # works for 16 IPUs
+# validation is on for epoch%period<len
+validation_period: [10, 10] # [ period, lenOn] (epochs), lenOn=0 is Off
+
+const_local_batch: True # True: faster, LR changes w/ num IPUs	
+#max_samples_per_epoch: 8000  # uncoment to skip data
+
+gc_m2000:
+    replica_steps_per_iter: 2
+    graph_caching: True
+    pseudoValidation: True
+    stagger_delay_sec:  0
+    enableSyntheticData: True
+    gradientAccumulation: 64
+    num_io_tiles: 0
+
+fp16_inputs: True
+fp16_model: True
+
+num_data_workers: 10  
+log_freq_per_epoch: 3 
+  
+train_conf:
+   warmup_epochs: 6
+   optimizer: [AdamW, 5e-4] # initLR 
+   LRsched: { plateau_patience: 8, reduceFactor: 0.11  }
+   #LRsched: {  decay_epochs: 20, gamma: 0.09 }
+
+model:
+    myId:  a2f791f3a_ontra4
+    comment: very optimized ML model, for GPUs
+    # note, input & output shapes are derived for the data, see dataLoader
+
+    conv_block: # CNN params
+        filter: [30, 90, 180]
+        kernel: [ 4,  4,  4]
+        pool:   [ 4,  4,  4]
+
+    batch_norm_flat: True 
+
+    fc_block: # FC params w/o last layer
+        dims: [ 512, 512, 512, 256, 128 ]
+        dropFrac: 0.05  
+    
+         
+# not tested on GC
+save_checkpoint: False  # only when loss improves
+resume_checkpoint: False  # False: always start over 
+# warning: for multi-gpu & resume --> val_loss explodes - no loop over GPUs
