@@ -65,6 +65,16 @@ def get_data_loader(params,  inpMD,domain,popopts, verb=1):
                              batch_size=conf['local_batch_size'],
                              num_workers=conf['num_data_workers'],
                              shuffle=shuffle,
+                             persistent_workers=True,
+                             mode=poptorch.DataLoaderMode.Async,
+                             async_options={
+                               "sharing_strategy":
+                                 poptorch.SharingStrategy.SharedMemory,       
+                               "early_preload": True,                     
+                               "buffer_size": conf['num_data_workers'],   
+                               "load_indefinitely": True,                 
+                               "miss_sleep_time_in_ms": 0
+                               },
                              auto_distributed_partitioning=False, #to serve all data
                                      )
 

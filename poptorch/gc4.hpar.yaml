@@ -20,6 +20,7 @@ gc_m2000:
     graph_caching: True
     pseudoValidation: True
     stagger_delay_sec:  2
+    num_io_tiles: 32
 
 num_data_workers: 2  
 log_freq_per_epoch: 3 
