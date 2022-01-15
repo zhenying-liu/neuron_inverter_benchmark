@@ -24,6 +24,8 @@ import copy
 from torch.utils.data import Dataset, DataLoader
 import torch 
 import logging
+import pickle
+pickle.DEFAULT_PROTOCOL=4
 import poptorch
     
 #...!...!..................
@@ -66,15 +68,15 @@ def get_data_loader(params,  inpMD,domain,popopts, verb=1):
                              num_workers=conf['num_data_workers'],
                              shuffle=shuffle,
                              persistent_workers=True,
-                             mode=poptorch.DataLoaderMode.Async,
-                             async_options={
-                               "sharing_strategy":
-                                 poptorch.SharingStrategy.SharedMemory,       
-                               "early_preload": True,                     
-                               "buffer_size": conf['num_data_workers'],   
-                               "load_indefinitely": True,                 
-                               "miss_sleep_time_in_ms": 0
-                               },
+                                mode=poptorch.DataLoaderMode.Async,
+                                async_options={
+                                    "sharing_strategy":
+                                    poptorch.SharingStrategy.SharedMemory,
+                                    "early_preload": True,
+                                    "buffer_size": conf['num_data_workers'],
+                                    "load_indefinitely": True,
+                                    "miss_sleep_time_in_ms": 0
+                                },
                              auto_distributed_partitioning=False, #to serve all data
                                      )
 

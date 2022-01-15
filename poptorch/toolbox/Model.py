@@ -6,6 +6,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
+import poptorch
 
 from torch.autograd import Variable  #can be differentiated, needed by LSTM
 #-------------------
@@ -137,7 +138,7 @@ class NeuInvModel(nn.Module):
         x = x.view(-1,self.flat_dim)
         
         if self.flat_bn!=None:
-            x=self.flat_bn(x);
+            x=self.flat_bn(x)
             
         for i,lyr in enumerate(self.fc_block):
             x=lyr(x)
@@ -161,8 +162,21 @@ class MyModelWithLoss(torch.nn.Module): # GC wrapper class
         self.model = model
         self.loss = torch.nn.MSELoss()
 
-    def forward(self, x,ytrue):
+    def forward(self, x, ytrue):
+
+        #if 'num_io_tiles' in self.model.params['gc_m2000'] and self.model.params['gc_m2000']['num_io_tiles'] >= 32:
+        x = poptorch.set_overlap_for_input(
+            x, poptorch.OverlapMode.OverlapAccumulationLoop)
+        ytrue = poptorch.set_overlap_for_input(
+            ytrue, poptorch.OverlapMode.OverlapAccumulationLoop)
+
         ypred = self.model(x)
-        return ypred, self.loss(ypred,ytrue)
+        loss = self.loss(ypred, ytrue)
+
+        #if 'num_io_tiles' in self.model.params['gc_m2000'] and self.model.params['gc_m2000']['num_io_tiles'] >= 32:
+        loss = poptorch.set_overlap_for_output(loss, poptorch.OverlapMode.OverlapAccumulationLoop)
+        ypred = poptorch.set_overlap_for_output(
+            ypred, poptorch.OverlapMode.OverlapAccumulationLoop)
+        return ypred, loss
 
     #Note, forward(.) output can be conditioned on self.training but NOT on ytrue==None (despit the latter may work in some simple cases)
